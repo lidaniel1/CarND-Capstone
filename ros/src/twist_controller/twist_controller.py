@@ -33,7 +33,7 @@ class Controller(object):
             brake = 700
         elif  cmdlinear_accel < 0 and throttle < 0.1:
             brake = abs(cmdlinear_accel) * self.vehicle_mass * self.wheel_radius 
-        else
+        else:
             brake = 0
         
         if brake < self.brake_deadband:

@@ -33,16 +33,18 @@ class WaypointUpdater(object):
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
-        rospy.Subscriber('/traffic_waypoint',Lane,self.traffic_cb)
-        rospy.Subscriber('/obstacle_waypoint',Lane,self.obstacle_cb)
+        #rospy.Subscriber('/traffic_waypoint',Lane,self.traffic_cb)
+        #rospy.Subscriber('/obstacle_waypoint',Lane,self.obstacle_cb)
 
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         # TODO: Add other member variables you need below
         self.base_waypoints = None 
-        self.base_2dwps = None 
+        self.base_2dwps = [] 
         self.pose = None 
-        self.final_waypoints = None 
+        self.tree = None    
+       
+        self.idx = -1
 
         self.waypoints_pub()
         rospy.spin()
@@ -55,32 +57,42 @@ class WaypointUpdater(object):
         # TODO: Implement
         self.base_waypoints = waypoints
         if not self.base_2dwps:
-            for x, y in waypoints.waypoints.pose.pose.position.x, waypoints.waypoints.pose.pose.position.y:
+            for item in waypoints.waypoints:
+                x = item.pose.pose.position.x
+                y = item.pose.pose.position.y
                 self.base_2dwps.append([x,y])
 
-        self.tree = KDTree(self.base_2dwps)
+            self.tree = KDTree(self.base_2dwps)
+
+            rospy.loginfo("base 2d %s, %s", x,y)
+            rospy.loginfo("base 2d length %s", len(self.base_2dwps))
+                       
            
     def waypoints_pub(self):                  
             rate = rospy.Rate(50)
             while not rospy.is_shutdown():
                 self.get_finalwaypoints()
-                if self.final_waypoints:
+                if self.idx > 0:
                     final_lane = Lane()
                     final_lane.header = self.base_waypoints.header
-                    final_lane.waypoints = self.final_waypoints
+                    final_lane.waypoints = self.base_waypoints.waypoints[self.idx::self.idx+LOOKAHEAD_WPS]
                     self.final_waypoints_pub.publish(final_lane)
+                    #rospy.loginfo("final waypoints is published")
                     rate.sleep()
 
     def get_finalwaypoints(self):
-        if self.pose and self.base_waypoints:
-            dist, idx = self.tree.query([self.pose.pose.position.x,self.pose.pose.position.y],1)  
+        if self.pose and self.base_waypoints and self.tree:
+            x = self.pose.pose.position.x
+            y = self.pose.pose.position.y
+            rospy.loginfo("current pose %s, %s", x,y)
+            dist, idx = self.tree.query([x,y],1)  
             
             closest_pt = self.base_2dwps[idx]
             prev_pt = self.base_2dwps[idx-1]
 
             np_closest = np.array(closest_pt)
             np_prev = np.array(prev_pt)
-            np_veh = ([self.pose.pose.position.x,self.pose.pose.position.y])
+            np_veh = ([x,y])
 
             vect_path = np_closest - np_prev
             vect_veh = np_closest - np_veh
@@ -91,7 +103,8 @@ class WaypointUpdater(object):
             if dir < 0:
                 idx = (idx+1) % len(self.base_2dwps)
             
-            self.final_waypoints = self.base_waypoints[idx:idx+LOOKAHEAD_WPS]
+            self.idx = idx 
+            #rospy.loginfo("closest idx %s", idx)
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement

@@ -89,6 +89,7 @@ class DBWNode(object):
 
     def dbw_status_cb(self,status):
         self.dbw_status = status
+        rospy.loginfo("dbw status %s", status)
 
     def loop(self):
         rate = rospy.Rate(50) # 50Hz
@@ -101,7 +102,7 @@ class DBWNode(object):
             #                                                     <current linear velocity>,
             #                                                     <dbw status>,
             #                                                     <any other argument you need>)
-            if not none in (self.actlinear_vel, self.actangular_vel,self.cmdlinear_vel,self.cmdangular_vel):
+            if not None in (self.actlinear_vel, self.actangular_vel,self.cmdlinear_vel,self.cmdangular_vel):
                 self.throttle,self.brake,self.steering = self.controller.control(self.actlinear_vel,self.actangular_vel,self.cmdlinear_vel,self.cmdangular_vel,self.dbw_status)
             if self.dbw_status:
                 self.publish(self.throttle, self.brake, self.steer)
