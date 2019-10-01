@@ -64,8 +64,8 @@ class WaypointUpdater(object):
 
             self.tree = KDTree(self.base_2dwps)
 
-            rospy.loginfo("base 2d %s, %s", x,y)
-            rospy.loginfo("base 2d length %s", len(self.base_2dwps))
+           # rospy.loginfo("base 2d %s, %s", x,y)
+           # rospy.loginfo("base 2d length %s", len(self.base_2dwps))
                        
            
     def waypoints_pub(self):                  
@@ -84,7 +84,7 @@ class WaypointUpdater(object):
         if self.pose and self.base_waypoints and self.tree:
             x = self.pose.pose.position.x
             y = self.pose.pose.position.y
-            rospy.loginfo("current pose %s, %s", x,y)
+            #rospy.loginfo("current pose %s, %s", x,y)
             dist, idx = self.tree.query([x,y],1)  
             
             closest_pt = self.base_2dwps[idx]

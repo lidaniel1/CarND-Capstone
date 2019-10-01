@@ -45,7 +45,7 @@ class DBWNode(object):
         steer_ratio = rospy.get_param('~steer_ratio', 14.8)
         max_lat_accel = rospy.get_param('~max_lat_accel', 3.)
         max_steer_angle = rospy.get_param('~max_steer_angle', 8.)
-
+        
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
                                          SteeringCmd, queue_size=1)
         self.throttle_pub = rospy.Publisher('/vehicle/throttle_cmd',
@@ -105,7 +105,9 @@ class DBWNode(object):
             if not None in (self.actlinear_vel, self.actangular_vel,self.cmdlinear_vel,self.cmdangular_vel):
                 self.throttle,self.brake,self.steering = self.controller.control(self.actlinear_vel,self.actangular_vel,self.cmdlinear_vel,self.cmdangular_vel,self.dbw_status)
             if self.dbw_status:
-                self.publish(self.throttle, self.brake, self.steer)
+                rospy.loginfo("publish dbw command")
+                self.publish(self.throttle, self.brake, self.steering)
+                rospy.loginfo("throttle %s, brake %s, steering %s", self.throttle, self.brake,self.steering)
             rate.sleep()
 
     def publish(self, throttle, brake, steer):
