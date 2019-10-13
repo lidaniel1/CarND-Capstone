@@ -54,7 +54,7 @@ class DBWNode(object):
                                          BrakeCmd, queue_size=1)
 
         # TODO: Create `Controller` object
-        min_speed = 0
+        min_speed = 0.1
         self.controller = Controller(wheel_base,steer_ratio,min_speed, max_lat_accel,max_steer_angle,
         vehicle_mass,brake_deadband,decel_limit,accel_limit,wheel_radius)
 

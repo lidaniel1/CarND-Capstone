@@ -24,7 +24,7 @@ class PID(object):
 
         val = self.kp * error + self.ki * integral + self.kd * derivative;
 
-        rospy.loginfo("kp %s, ki %s, kd %s", self.kp, self.ki, self.kd)
+        #rospy.loginfo("kp %s, ki %s, kd %s", self.kp, self.ki, self.kd)
 
         if val > self.max:
             val = self.max
@@ -34,5 +34,5 @@ class PID(object):
             self.int_val = integral
         self.last_error = error
 
-        rospy.loginfo("throttle %s, error %s, integral error %s, derivative error %s", val, error, integral, derivative)
+        #ospy.loginfo("throttle %s, error %s, integral error %s, derivative error %s", val, error, integral, derivative)
         return val

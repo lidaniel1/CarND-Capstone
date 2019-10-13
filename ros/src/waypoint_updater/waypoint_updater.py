@@ -69,15 +69,15 @@ class WaypointUpdater(object):
                        
            
     def waypoints_pub(self):                  
-            rate = rospy.Rate(50)
+            rate = rospy.Rate(10)
             while not rospy.is_shutdown():
                 self.get_finalwaypoints()
                 if self.idx > 0:
                     final_lane = Lane()
                     final_lane.header = self.base_waypoints.header
-                    final_lane.waypoints = self.base_waypoints.waypoints[self.idx::self.idx+LOOKAHEAD_WPS]
+                    final_lane.waypoints = self.base_waypoints.waypoints[self.idx:self.idx+LOOKAHEAD_WPS]
                     self.final_waypoints_pub.publish(final_lane)
-                    #rospy.loginfo("final waypoints is published")
+                    #rospy.loginfo("final waypoint index %s, %s",self.idx, self.idx+LOOKAHEAD_WPS )
                     rate.sleep()
 
     def get_finalwaypoints(self):
@@ -105,6 +105,10 @@ class WaypointUpdater(object):
             
             self.idx = idx 
             #rospy.loginfo("closest idx %s", idx)
+            #rospy.loginfo("current pose x %s, y %s",x,y)
+            #rospy.loginfo("nearest point in front %s, %s",self.base_2dwps[idx][0], self.base_2dwps[idx][1])
+            #rospy.loginfo("nearest point behind %s, %s",self.base_2dwps[idx-1][0], self.base_2dwps[idx-1][1])
+
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
