@@ -27,7 +27,7 @@ def readmsg ():
     cnt1 = 0
     cnt2 = 0
     state = -1 
-    bag = rosbag.Bag('/home/student/catkin_ws/CarND-Capstone/ros/rosbag/run5.bag')
+    bag = rosbag.Bag('/home/student/catkin_ws/CarND-Capstone/ros/rosbag/run11.bag')
     for topic, msg, t in bag.read_messages():
         if topic == topic1:
             x = msg.lights[0].pose.pose.position.x
@@ -53,7 +53,7 @@ def readmsg ():
             img = img.reshape(msg.height,msg.width,3)
             img_file = PIL_Image.fromarray(img,'RGB')
             if state >= 0:
-                img_file.save('/home/student/catkin_ws/CarND-Capstone/ros/image2/'+ tl_color + '/run5_' +str(cnt2)+  '.jpg')
+                img_file.save('/home/student/catkin_ws/CarND-Capstone/ros/image2/'+ tl_color + '/run11_' +str(cnt2)+  '.jpg')
             #plt.figure(figsize=(10,10))
             #plt.imshow(img)
             #plt.show()
