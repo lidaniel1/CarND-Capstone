@@ -10,6 +10,8 @@ from light_classification.tl_classifier import TLClassifier
 import tf
 import cv2
 import yaml
+from scipy.spatial import KDTree
+import math
 
 STATE_COUNT_THRESHOLD = 3
 
@@ -21,6 +23,9 @@ class TLDetector(object):
         self.waypoints = None
         self.camera_image = None
         self.lights = []
+        self.base_2dwps = None
+        self.tree = None
+        self.light_wp = None 
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
@@ -56,7 +61,14 @@ class TLDetector(object):
 
     def waypoints_cb(self, waypoints):
         self.waypoints = waypoints
+        if not self.base_2dwps:
+            for item in waypoints.waypoints:
+                x = item.pose.pose.position.x
+                y = item.pose.pose.position.y
+                self.base_2dwps.append([x,y])
 
+            self.tree = KDTree(self.base_2dwps)
+            
     def traffic_cb(self, msg):
         self.lights = msg.lights
 
@@ -90,7 +102,7 @@ class TLDetector(object):
             self.upcoming_red_light_pub.publish(Int32(self.last_wp))
         self.state_count += 1
 
-    def get_closest_waypoint(self, pose):
+    def get_closest_waypoint(self, x, y):
         """Identifies the closest path waypoint to the given position
             https://en.wikipedia.org/wiki/Closest_pair_of_points_problem
         Args:
@@ -101,7 +113,11 @@ class TLDetector(object):
 
         """
         #TODO implement
-        return 0
+        if self.tree:
+            dist, idx = self.tree.query([x,y],1)          
+            return idx
+
+        return -1
 
     def get_light_state(self, light):
         """Determines the current color of the traffic light
@@ -113,14 +129,13 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        if(not self.has_image):
-            self.prev_light_loc = None
-            return False
-
-        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+        return light.state
+        #if(not self.has_image):
+        #    self.prev_light_loc = None
+        #    return False
 
         #Get classification
-        return self.light_classifier.get_classification(cv_image)
+        #return self.light_classifier.get_classification(self.camera_image)
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
@@ -131,19 +146,37 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        light = None
+        closest_light = None
+        light_wp_idx = None
+        dist = 999
 
         # List of positions that correspond to the line to stop in front of for a given intersection
         stop_line_positions = self.config['stop_line_positions']
+
         if(self.pose):
-            car_position = self.get_closest_waypoint(self.pose.pose)
+            x = self.pose.pose.position.x
+            y = self.pose.pose.position.y 
+            car_position = self.get_closest_waypoint(x,y)
+            
+            #TODO find the closest visible traffic light (if one exists)
+            min_diff = len(self.waypoints.waypoints)
 
-        #TODO find the closest visible traffic light (if one exists)
+            for i, light in enumerate(self.lights):
+                # stop line location
+                item = stop_line_positions[i]
+                item_idx = self.get_closest_waypoint(item[0],item[1])
 
-        if light:
+                diff = item_idx - car_position
+                if diff >=0 and diff < min_diff:
+                    min_diff = diff
+                    dist = math.sqrt( pow(x-item[0]) + pow(y-item[1]))
+                    closest_light = light
+                    light_wp_idx = item_idx
+            
+        if closest_light and dist < 300:
             state = self.get_light_state(light)
-            return light_wp, state
-        self.waypoints = None
+            return light_wp_idx, state
+
         return -1, TrafficLight.UNKNOWN
 
 if __name__ == '__main__':

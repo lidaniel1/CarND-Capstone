@@ -1,0 +1,19 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "args": ["--images_dir","/home/student/catkin_ws/CarND-Capstone/ros/tl_dataset/images",
+                "--annotations_dir","/home/student/catkin_ws/CarND-Capstone/ros/tl_dataset/annotations",
+                "--output_dir","/home/student/catkin_ws/CarND-Capstone/ros/tl_dataset/data/",
+                "--label_map_path","/home/student/catkin_ws/CarND-Capstone/ros/tl_dataset/data/tl_label_map.pbtxt"],
+            "console": "integratedTerminal"
+        }
+    ]
+}
