@@ -145,7 +145,7 @@ class WaypointUpdater(object):
             ed_wp_idx = self.idx+LOOKAHEAD_WPS
             base_wp = self.base_waypoints.waypoints[st_wp_idx:ed_wp_idx] 
             rospy.loginfo("closet waypoint index %s",st_wp_idx)
-            rospy.loginfo("base way poin cmd vel %s and final lane cmd vel %s",  self.base_waypoints.waypoints[st_wp_idx], final_lane.waypoints[0].twist.twist.linear.x)  
+            
                      
             # if traffic light is red or stopline is closer than the look ahead waypoint 
             if self.stopline_wp_idx > -1 and (self.stopline_wp_idx < ed_wp_idx):
@@ -166,11 +166,14 @@ class WaypointUpdater(object):
                     ith_wp.twist.twist.linear.x = min(vel,wp.twist.twist.linear.x)
                     temp.append(ith_wp)
 
-                    rospy.loginfo("ith %s modified way poin cmd vel %s", i,final_lane.waypoints[i].twist.twist.linear.x)  
+                    rospy.loginfo("ith %s modified way poin cmd vel %s", i,ith_wp.twist.twist.linear.x)  
                     rospy.loginfo("ith way point %s, cmd velocity %s, %s", i,vel,wp.twist.twist.linear.x)
                 final_lane.waypoints = temp
             else:
                 final_lane.waypoints = base_wp
+
+            rospy.loginfo("base way poin cmd vel %s and final lane cmd vel %s",  self.base_waypoints.waypoints[st_wp_idx], final_lane.waypoints[0].twist.twist.linear.x)  
+
         return final_lane                
 
 if __name__ == '__main__':
