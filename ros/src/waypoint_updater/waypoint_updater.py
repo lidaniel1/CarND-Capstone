@@ -166,13 +166,16 @@ class WaypointUpdater(object):
                     ith_wp.twist.twist.linear.x = min(vel,wp.twist.twist.linear.x)
                     temp.append(ith_wp)
 
-                    rospy.loginfo("ith %s modified way poin cmd vel %s", i,ith_wp.twist.twist.linear.x)  
-                    rospy.loginfo("ith way point %s, cmd velocity %s, %s", i,vel,wp.twist.twist.linear.x)
+                    if i ==0:
+                        rospy.loginfo("0th point dist %s to zero wp idx %s and vel is %s",dist,zero_wp_idx,vel)
+                    #rospy.loginfo("ith %s modified way poin cmd vel %s", i,ith_wp.twist.twist.linear.x)  
+                    #rospy.loginfo("ith way point %s, cmd velocity %s, %s", i,vel,wp.twist.twist.linear.x)
+                
                 final_lane.waypoints = temp
             else:
                 final_lane.waypoints = base_wp
 
-            rospy.loginfo("base way poin cmd vel %s and final lane cmd vel %s",  self.base_waypoints.waypoints[st_wp_idx], final_lane.waypoints[0].twist.twist.linear.x)  
+            rospy.loginfo("base way poin cmd vel %s and final lane cmd vel %s",  self.base_waypoints.waypoints[st_wp_idx].twist.twist.linear.x, final_lane.waypoints[0].twist.twist.linear.x)  
 
         return final_lane                
 

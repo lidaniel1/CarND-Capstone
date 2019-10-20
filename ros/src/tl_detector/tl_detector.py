@@ -62,7 +62,6 @@ class TLDetector(object):
         self.pose = msg
 
     def waypoints_cb(self, waypoints):
-        rospy.loginfo("waypoints call back is ccalled")
         self.waypoints = waypoints
         if not self.base_2dwps:
             for item in waypoints.waypoints:
@@ -133,13 +132,15 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        return light.state
-        #if(not self.has_image):
-        #    self.prev_light_loc = None
-        #    return False
+        #return light.state
+
+        
+        if(not self.has_image):
+            self.prev_light_loc = None
+            return False
 
         #Get classification
-        #return self.light_classifier.get_classification(self.camera_image)
+        return self.light_classifier.get_classification(self.camera_image)
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its

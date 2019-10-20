@@ -105,9 +105,8 @@ class DBWNode(object):
             if not None in (self.actlinear_vel, self.actangular_vel,self.cmdlinear_vel,self.cmdangular_vel):
                 self.throttle,self.brake,self.steering = self.controller.control(self.actlinear_vel,self.actangular_vel,self.cmdlinear_vel,self.cmdangular_vel,self.dbw_status)
             if self.dbw_status:
-                rospy.loginfo("publish dbw command")
                 self.publish(self.throttle, self.brake, self.steering)
-                rospy.loginfo("cmd velocity %s, throttle %s, brake %s, steering %s", self.cmdlinear_vel, self.throttle, self.brake,self.steering)
+                #rospy.loginfo("cmd velocity %s, act velocity %s,throttle %s, brake %s, steering %s", self.cmdlinear_vel, self.actlinear_vel, self.throttle, self.brake,self.steering)
             rate.sleep()
 
     def publish(self, throttle, brake, steer):
