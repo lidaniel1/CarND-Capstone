@@ -1,90 +1,49 @@
-This is the project repo for the final project of the Udacity Self-Driving Car Nanodegree: Programming a Real Self-Driving Car. For more information about the project, see the project introduction [here](https://classroom.udacity.com/nanodegrees/nd013/parts/6047fe34-d93c-4f50-8336-b70ef10cb4b2/modules/e1a23b06-329a-4684-a717-ad476f0d8dff/lessons/462c933d-9f24-42d3-8bdc-a08a5fc866e4/concepts/5ab4b122-83e6-436d-850f-9f4d26627fd9).
+This is the project repo to complete the final project of the Udacity Self-Driving Car Nanodegree: Programming a Real Self-Driving Car. For more information about the project instructions, see the project introduction on the Udacity Github [here](https://classroom.udacity.com/nanodegrees/nd013/parts/6047fe34-d93c-4f50-8336-b70ef10cb4b2/modules/e1a23b06-329a-4684-a717-ad476f0d8dff/lessons/462c933d-9f24-42d3-8bdc-a08a5fc866e4/concepts/5ab4b122-83e6-436d-850f-9f4d26627fd9).
 
-Please use **one** of the two installation options, either native **or** docker installation.
+### Installation
 
-### Native Installation
+1.	The best way is to install all the software below on a native Linux PC if available. I installed a VirtualBox on a Windows 10 PC to load the virtual machine provided by Udacity which has Ubuntu and ROS already installed. The password is udacity-nd. Set up port forwarding in the VM Settings -> Network -> Adapter 1 Adavanced -> Port Forwarding. Add a rule for Host IP 127.0.0.1, Host Port 4567 and Guest Port 4567.
 
-* Be sure that your workstation is running Ubuntu 16.04 Xenial Xerus or Ubuntu 14.04 Trusty Tahir. [Ubuntu downloads can be found here](https://www.ubuntu.com/download/desktop).
-* If using a Virtual Machine to install Ubuntu, use the following configuration as minimum:
-  * 2 CPU
-  * 2 GB system memory
-  * 25 GB of free hard drive space
+	Use the following configuration as minimum:
+	* 2 CPU
+	* 2 GB system memory
+	* 25 GB of free hard drive space
+	
+2. Create a "catkin_ws" folder in the virutal machine home directory. Clone the project repository with the following command in this folder
+   git clone https://github.com/udacity/CarND-Capstone.git
+   
+   Install Python Dependencies:
+   * cd CarND-Capstone
+   * pip install -r requirements.txt
+   
+3. Install a data labeling app on the virtual machine. This is used to manually label the camera images logged from the simulator. This can be downloaded [here](https://github.com/tzutalin/labelImg). For this project, I used the option "Python 2 + Qt4". However,labelImg.py was not able to run initially. I downloaded pyqt5-dev-tools and replaced import PyQt4 to import PyQt5 in a few places.
 
-  The Udacity provided virtual machine has ROS and Dataspeed DBW already installed, so you can skip the next two steps if you are using this.
+4. Download and install the applications needed for the Tensorflow object detection API which has pre-trained object detection model. I used the pre-trained model as a starting point to train the traffic light images for classifying the traffic light state. The Tensorflow model is [here](https://github.com/tensorflow/models). Initially, I installed the model on the virtual machine. However, I found out later the training could not start due to out of memory. Instead, I installed on my host PC which has a GPU.
 
-* Follow these instructions to install ROS
-  * [ROS Kinetic](http://wiki.ros.org/kinetic/Installation/Ubuntu) if you have Ubuntu 16.04.
-  * [ROS Indigo](http://wiki.ros.org/indigo/Installation/Ubuntu) if you have Ubuntu 14.04.
-* [Dataspeed DBW](https://bitbucket.org/DataspeedInc/dbw_mkz_ros)
-  * Use this option to install the SDK on a workstation that already has ROS installed: [One Line SDK Install (binary)](https://bitbucket.org/DataspeedInc/dbw_mkz_ros/src/81e63fcc335d7b64139d7482017d6a97b405e250/ROS_SETUP.md?fileviewer=file-view-default)
-* Download the [Udacity Simulator](https://github.com/udacity/CarND-Capstone/releases).
+5.	Download the [Udacity Simulator](https://github.com/udacity/CarND-Capstone/releases) and save to the host PC. The Simulator runs in the host PC and the control codes run in the virtual machine.
 
-### Docker Installation
-[Install Docker](https://docs.docker.com/engine/installation/)
+### Working flow
+1. Complete the waypoint_update.py (partial) without traffic light detection following the project instructions and walkthrough. The publish rate for the topic "final_waypoints" to reduce some latency. 
 
-Build the docker container
-```bash
-docker build . -t capstone
-```
+2. Complete the DBW node by updating [dbw_node.py](https://github.com/lidaniel1/CarND-Capstone/tree/master/ros/src/twist_controller/dbw_node.py) and [twist_controller.py](https://github.com/lidaniel1/CarND-Capstone/tree/master/ros/src/twist_controller/twist_controller.py)
 
-Run the docker file
-```bash
-docker run -p 4567:4567 -v $PWD:/capstone -v /tmp/log:/root/.ros/ --rm -it capstone
-```
+3. Record the traffic light images for the training and validation data set. Manually drive the car around each traffic lights for all three states: green, yellow and red in the simulator and record the two topics "/vehicle/traffic_lights" and "/image_color" to ROS bag files. Since the manual-driven car velocity was low, I used ROS "throttle" commmand to reduce the rate of the two topics to 1 Hz and then run rosbag record command.
+	* rosrun topic_tools throttle messages /vehicle/traffic_lights 1.0
+	* rosrun topic_tools throttle messages /image_color 1.0
+	* rosbag record -O run.bag --split --size=1024 /vehicle/traffic_lights_throttle /image_color_throttle
 
-### Port Forwarding
-To set up port forwarding, please refer to the "uWebSocketIO Starter Guide" found in the classroom (see Extended Kalman Filter Project lesson).
+4. Create a [script](https://github.com/lidaniel1/CarND-Capstone/blob/master/ros/src/tl_training_prep/readbagfile.py) to read the recorded bag files and output recorded image to green, red,yellow and unknown folerders.
 
-### Usage
+5. Run the data labeling app to manually label all the images. The app created a lable file (xml) for each image. Totally I labelled 829 images which are [here](https://github.com/lidaniel1/CarND-Capstone/tree/master/ros/image). 
+	python labelImg.py
+	
+6. Create a TF record file for traffic light classification training. All the labels (xml files) were copied to a common folder [annotations](https://github.com/lidaniel1/CarND-Capstone/tree/master/ros/tl_dataset/annotations). The list of annotations files is saved in [tl_dataset.txt](https://github.com/lidaniel1/CarND-Capstone/blob/master/ros/tl_dataset/annotations/tl_dataset.txt). All the images were copied to another common folder [images](https://github.com/lidaniel1/CarND-Capstone/tree/master/ros/tl_dataset/images). Manually create a [tl_label_map.pbtxt](https://github.com/lidaniel1/CarND-Capstone/blob/master/ros/tl_dataset/data/tl_label_map.pbtxt) file. A script [create_tf_record.py](https://github.com/lidaniel1/CarND-Capstone/blob/master/ros/src/tl_training_prep/create_tf_record.py) was run to generate training data set [tl_train.record](https://github.com/lidaniel1/CarND-Capstone/blob/master/ros/tl_dataset/data/tl_train.record) and validation data set [tl_val.record](https://github.com/lidaniel1/CarND-Capstone/blob/master/ros/tl_dataset/data/tl_val.record).
 
-1. Clone the project repository
-```bash
-git clone https://github.com/udacity/CarND-Capstone.git
-```
+7. Train the traffic light classification using the "ssd_inception_v2_coco" model downloaded from the [Tensorflow detection model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md) on the host PC. The ssd_inception_v2_coco has reasonable accuracy with the fastest execution time. The config file for the training is [here](https://github.com/lidaniel1/CarND-Capstone/blob/master/ros/tl_dataset/tl.config). I had to reduce the batch size to resolve the out of memory issue during the training. The model was trained for 20000 steps as shown in the [figure](https://github.com/lidaniel1/CarND-Capstone/tree/master/ros/src/tl_detector/light_classification/tl_training_progress.png]. After the training was complete, the Tensorflow graph was frozen and saved in [tl_classification_final](https://github.com/lidaniel1/CarND-Capstone/tree/master/ros/src/tl_detector/light_classification/tl_classification_final) folder. A random select of sample images were run through the Tensorflow graph to verify the accuracy. The trained model was able to detect the traffic light state for all the images. The results are [here](https://github.com/lidaniel1/CarND-Capstone/tree/master/ros/src/tl_detector/light_classification/tl_classification_valid. I made another [script](https://github.com/lidaniel1/CarND-Capstone/blob/master/ros/src/tl_detector/tl_classification_class_test.py) to verify classification directly using the rosbag file.
 
-2. Install python dependencies
-```bash
-cd CarND-Capstone
-pip install -r requirements.txt
-```
-3. Make and run styx
-```bash
-cd ros
-catkin_make
-source devel/setup.sh
-roslaunch launch/styx.launch
-```
-4. Run the simulator
+8. Create [tl_classifier.py](https://github.com/lidaniel1/CarND-Capstone/blob/master/ros/src/tl_detector/light_classification/tl_classifier.py) for traffic light classification and complete the [traffic light detection node](https://github.com/lidaniel1/CarND-Capstone/blob/master/ros/src/tl_detector/tl_detector.py) per the project instructions and walkthrough.  The path for the graph file in the script was absolute. To run this code in another machine, the path need be upated.
 
-### Real world testing
-1. Download [training bag](https://s3-us-west-1.amazonaws.com/udacity-selfdrivingcar/traffic_light_bag_file.zip) that was recorded on the Udacity self-driving car.
-2. Unzip the file
-```bash
-unzip traffic_light_bag_file.zip
-```
-3. Play the bag file
-```bash
-rosbag play -l traffic_light_bag_file/traffic_light_training.bag
-```
-4. Launch your project in site mode
-```bash
-cd CarND-Capstone/ros
-roslaunch launch/site.launch
-```
-5. Confirm that traffic light detection works on real life images
+9. Complete the waypoint updater node (full) per the project instructions and walkthrough. Here is the file [waypoint_updater.py]( https://github.com/lidaniel1/CarND-Capstone/tree/master/ros/src/waypoint_updater/waypoint_updater.py)
 
-### Other library/driver information
-Outside of `requirements.txt`, here is information on other driver/library versions used in the simulator and Carla:
-
-Specific to these libraries, the simulator grader and Carla use the following:
-
-|        | Simulator | Carla  |
-| :-----------: |:-------------:| :-----:|
-| Nvidia driver | 384.130 | 384.130 |
-| CUDA | 8.0.61 | 8.0.61 |
-| cuDNN | 6.0.21 | 6.0.21 |
-| TensorRT | N/A | N/A |
-| OpenCV | 3.2.0-dev | 2.4.8 |
-| OpenMP | N/A | N/A |
-
-We are working on a fix to line up the OpenCV versions between the two.
+10. Test the completed project in the simulator. However, the latency between the virtual machine and host was too large once the camera mode was turned on. It was not possible to verify the car driving for a loop. However, the detection of the traffic light status was verified and the command velocity when the traffic light detection was also verified. The car was verified to drive the entire loop when the camera mode was off and without the traffic detection node.
+	* roslaunch launch/styx.launch
