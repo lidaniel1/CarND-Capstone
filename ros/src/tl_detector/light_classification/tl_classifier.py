@@ -2,11 +2,16 @@ from styx_msgs.msg import TrafficLight
 from sensor_msgs.msg import Image
 import tensorflow as tf 
 import numpy as np 
+import os 
+import rospy
 
 class TLClassifier(object):
     def __init__(self):
         #TODO load froze graph
-        graph_file = r'/home/student/catkin_ws/CarND-Capstone/ros/src/tl_detector/light_classification/tl_classification_final/frozen_inference_graph.pb'
+        path = os.path.dirname(os.path.realpath(__file__))
+        #graph_file = r'/home/student/catkin_ws/CarND-Capstone/ros/src/tl_detector/light_classification/tl_classification_final/frozen_inference_graph.pb'
+        graph_file = path + '/tl_classification_final/frozen_inference_graph.pb'
+        print("graph file is {}").format(graph_file)
         self.graph = tf.Graph()
         with self.graph.as_default():
             od_graph_def = tf.GraphDef()
