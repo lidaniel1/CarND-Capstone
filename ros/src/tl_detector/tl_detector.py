@@ -13,7 +13,7 @@ import yaml
 from scipy.spatial import KDTree
 import math
 
-STATE_COUNT_THRESHOLD = 3
+STATE_COUNT_THRESHOLD = 2
 LOOKAHEAD_WPS = 200 
 
 class TLDetector(object):
@@ -140,7 +140,13 @@ class TLDetector(object):
             return False
 
         #Get classification
-        return self.light_classifier.get_classification(self.camera_image)
+        # Tensorflow need some time to initialize, if click "camera" too soon after launching the node it will error out
+        while True:
+            try:
+                return self.light_classifier.get_classification(self.camera_image)
+            except:
+                continue
+            break
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its
