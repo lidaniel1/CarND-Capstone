@@ -13,8 +13,9 @@ import yaml
 from scipy.spatial import KDTree
 import math
 
-STATE_COUNT_THRESHOLD = 2
+STATE_COUNT_THRESHOLD = 1
 LOOKAHEAD_WPS = 200 
+IMAGE_PROCESS_PERIOD = 3 # process only 1 image every 3 images
 
 class TLDetector(object):
     def __init__(self):
@@ -42,6 +43,8 @@ class TLDetector(object):
         self.last_state = TrafficLight.UNKNOWN
         self.last_wp = -1
         self.state_count = 0
+        self.image_process_count = 0
+
 
         sub3 = rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb)
         sub6 = rospy.Subscriber('/image_color', Image, self.image_cb)
@@ -84,8 +87,21 @@ class TLDetector(object):
         """
         self.has_image = True
         self.camera_image = msg
-        light_wp, state = self.process_traffic_lights()
+        rospy.loginfo("image call back start")
 
+        # image classification only called once every # (IMAGE_PROCESS_PERIOD) of images
+        if self.image_process_count == 0:
+            now = rospy.get_rostime()
+            rospy.loginfo("traffic light processing start time sec %i ,nsec %i",now.secs,now.nsecs)
+            light_wp, state = self.process_traffic_lights()
+            now = rospy.get_rostime()
+            rospy.loginfo("traffic light processing end time sec %i ,nsec %i",now.secs,now.nsecs)
+        else:
+            light_wp = self.last_wp
+            state = self.last_state
+
+        self.image_process_count += 1
+        self.image_process_count = self.image_process_count % IMAGE_PROCESS_PERIOD
         '''
         Publish upcoming red lights at camera frequency.
         Each predicted state has to occur `STATE_COUNT_THRESHOLD` number
@@ -93,9 +109,12 @@ class TLDetector(object):
         used.
         '''
         if self.state != state:
-            self.state_count = 0
-            self.state = state
-        elif self.state_count >= STATE_COUNT_THRESHOLD:
+            # self.state_count = 0  # original
+            self.state_count = 1
+            self.state = state   
+        #elif self.state_count >= STATE_COUNT_THRESHOLD:
+
+        if self.state_count >= STATE_COUNT_THRESHOLD:
             self.last_state = self.state
             light_wp = light_wp if state == TrafficLight.RED else -1
             self.last_wp = light_wp
@@ -103,6 +122,7 @@ class TLDetector(object):
             rospy.loginfo("stop line way point idx %s", light_wp)
         else:
             self.upcoming_red_light_pub.publish(Int32(self.last_wp))
+
         self.state_count += 1
 
     def get_closest_waypoint(self, x, y):
